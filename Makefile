@@ -86,7 +86,7 @@ help:
 	@echo "  make deploy-all            Enable, create repo, build, and deploy"
 	@echo "  make bootstrap             Create project, link billing, enable, repo"
 	@echo "  make init-firestore        Initialize Firestore database (requires FIRESTORE_MODE and FIRESTORE_LOCATION)"
-	@echo "\nUsage: make deploy-all PROJECT_ID=your-project REGION=us-central1 TAG=$(TAG)"
+	@echo "\nNote: all required variables must be set in .env; do not pass args to make."
 
 print-config:
 	@echo PROJECT_ID=$(PROJECT_ID)
