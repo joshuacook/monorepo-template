@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
-const items = [
+const items: { href: Route; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }
 ];
 
@@ -39,4 +40,3 @@ export function Sidebar() {
     </div>
   );
 }
-

@@ -20,6 +20,11 @@ BILLING_ACCOUNT ?=
 BACKEND_URL ?=
 IMAGE := $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(REPO)/backend:$(TAG)
 
+# Ensure TAG gets a default even if defined empty in .env
+ifeq ($(strip $(TAG)),)
+TAG := $(shell git rev-parse --short HEAD 2>/dev/null || date +%s)
+endif
+
 # Firestore initialization inputs
 FIRESTORE_MODE ?=
 FIRESTORE_LOCATION ?=
@@ -141,11 +146,15 @@ build: _require-env-build
 	  --project $(PROJECT_ID) --account $(ACCOUNT)
 
 deploy: _require-env-deploy
+	@ENV_LIST=$$(grep -E '^[A-Za-z_][A-Za-z0-9_]*=' .env | sed 's/\r$$//' | paste -sd, -); \
+	if [ -z "$$ENV_LIST" ]; then \
+	  echo "ERROR: No environment variables found in .env to pass to Cloud Run." 1>&2; exit 1; \
+	fi; \
 	gcloud run deploy $(MAIN_API_SERVICE) \
 	  --image $(IMAGE) \
 	  --region $(REGION) \
 	  --allow-unauthenticated \
-	  --env-vars-file .env \
+	  --set-env-vars $$ENV_LIST \
 	  --project $(PROJECT_ID) --account $(ACCOUNT)
 
 deploy-all: enable-services create-repo build deploy
