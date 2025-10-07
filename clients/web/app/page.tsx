@@ -1,11 +1,10 @@
 "use client";
-import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_BASE_URL || "", []);
-  const { isSignedIn, getToken } = useAuth();
   const [status, setStatus] = useState<"idle" | "ok" | "fail">("idle");
   const [message, setMessage] = useState<string>("");
   const [usedToken, setUsedToken] = useState<boolean>(false);
@@ -13,28 +12,12 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
     async function probe() {
-      if (!apiBase) {
-        setStatus("idle");
-        setMessage("NEXT_PUBLIC_API_BASE_URL not set");
-        setUsedToken(false);
-        return;
-      }
       try {
-        let token: string | null = null;
-        if (isSignedIn) {
-          try {
-            token = await getToken();
-          } catch (_) {
-            token = null;
-          }
-        }
-        const resp = await fetch(`${apiBase.replace(/\/$/, "")}/v1/health`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          cache: "no-store"
-        });
-        const ok = resp.ok;
+        const resp = await fetch(`/api/health`, { cache: "no-store" });
+        const data = await resp.json().catch(() => ({} as any));
+        const ok = resp.ok && data?.ok !== false;
         if (cancelled) return;
-        setUsedToken(!!token);
+        setUsedToken(Boolean(data?.usedToken));
         setStatus(ok ? "ok" : "fail");
         setMessage(ok ? "Connected" : `HTTP ${resp.status}`);
       } catch (err: any) {
@@ -48,7 +31,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [apiBase, isSignedIn, getToken]);
+  }, [apiBase]);
 
   const badgeClass =
     status === "ok"

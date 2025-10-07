@@ -1,6 +1,6 @@
 import os
 import re
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Template Backend", version="0.1.0")
@@ -52,10 +52,25 @@ def root():
 
 # Versioned routes
 @app.get("/v1")
-def v1_root():
+def v1_root(_=Depends(lambda: verify_api_token())):
     return {"service": "backend", "version": 1, "status": "ok"}
 
 
 @app.get("/v1/health")
-def v1_health():
+def v1_health(_=Depends(lambda: verify_api_token())):
     return {"status": "ok"}
+
+
+def verify_api_token(authorization: str | None = Header(default=None)) -> None:
+    """Require Authorization: Bearer <API_TOKEN> when API_TOKEN is set.
+
+    If API_TOKEN is unset/empty, the check is bypassed (open).
+    """
+    configured = os.getenv("API_TOKEN", "").strip()
+    if not configured:
+        return
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing token")
+    token = authorization.split(" ", 1)[1].strip()
+    if token != configured:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
