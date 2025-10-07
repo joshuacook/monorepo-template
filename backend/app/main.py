@@ -57,12 +57,12 @@ def root():
 
 # Versioned routes
 @app.get("/v1")
-def v1_root(_=Depends(lambda: verify_api_token())):
+def v1_root(_: None = Depends(verify_api_token)):
     return {"service": "backend", "version": 1, "status": "ok"}
 
 
 @app.get("/v1/health")
-def v1_health(_=Depends(lambda: verify_api_token())):
+def v1_health(_: None = Depends(verify_api_token)):
     return {"status": "ok"}
 
 
